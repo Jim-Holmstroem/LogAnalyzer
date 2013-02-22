@@ -12,7 +12,7 @@ mongocollection = {
 
 def parser(line):
     month, day, time, domain, sndr, *msg = line.split()
-    sender = sndr.rstrip(':')
+    sender, *number = sndr.rstrip(':').rstrip(']').split('[') #``sender[number]'' OR ``sender''
     message = ' '.join(msg)
     return dict(
         datatime=time_parser(
@@ -28,17 +28,28 @@ def parser(line):
         message=message
     )
 
-#ugly put it's supposed to run interactivly and thus needs a handle to the mongo open after execution.
-mongoconn = pymongo.MongoClient('localhost', 1337) 
-with open(log_file) as logf:#, pymongo.MongoClient('localhost', 1337) as mongoconn:
+with open(log_file) as logf, pymongo.MongoClient('localhost', 1337) as mongoconn:
     mongod = mongoconn[mongocollection['database']]
     logdata = map(parser,logf)
-    mongoc = mongod[mongocollection['name']]
-    mongoc.remove()
-    mongoc.insert(
+    data = mongod[mongocollection['name']]
+    data.remove()
+    data.insert(
         map(
             parser,
             logf
         )
     )
+
+senders = dict(
+    map(
+        lambda sender: 
+            (
+                sender,
+                dict( #sender statistics
+                    count=data.find({'sender': sender}).count(),
+                )
+            ),
+        data.distinct('sender')
+    )
+)
 
