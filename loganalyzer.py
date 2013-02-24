@@ -2,7 +2,6 @@ import pymongo
 from time import strptime as time_parser
 import os
 
-
 log_file = "/var/log/syslog"
 assert(os.path.isfile(log_file))
 mongocollection = {
@@ -40,14 +39,24 @@ with open(log_file) as logf, pymongo.MongoClient('localhost', 1337) as mongoconn
         )
     )
 
+def sender_statistics(data, sender):
+    """returns an senders data"""
+    sender_data = list(data.find({'sender': sender}))
+    dict( #sender statistics
+        count=data.find({'sender': sender}).count(),
+        data=data.find({
+    )
+
+statistics = {
+    'sender' = sender_statistics,
+}
+
 senders = dict(
     map(
         lambda sender: 
             (
                 sender,
-                dict( #sender statistics
-                    count=data.find({'sender': sender}).count(),
-                )
+                sender_statistics(data, sender)
             ),
         data.distinct('sender')
     )
