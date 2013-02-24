@@ -2,7 +2,7 @@ import pymongo
 from time import strptime as time_parser
 import os
 
-log_file = "/var/log/syslog"
+log_file = "/var/log/syslog.1"
 assert(os.path.isfile(log_file))
 mongocollection = {
     'database': 'logfiles',
@@ -42,14 +42,10 @@ with open(log_file) as logf, pymongo.MongoClient('localhost', 1337) as mongoconn
 def sender_statistics(data, sender):
     """returns an senders data"""
     sender_data = list(data.find({'sender': sender}))
-    dict( #sender statistics
+    return dict( #sender statistics
         count=data.find({'sender': sender}).count(),
-        data=data.find({
+        data=sender_data
     )
-
-statistics = {
-    'sender' = sender_statistics,
-}
 
 senders = dict(
     map(
@@ -62,3 +58,7 @@ senders = dict(
     )
 )
 
+def render_sender(sender):
+    #need some clusterings to group together things which only differ on irrelevant data like [0.0001]
+    for line in senders[sender]['data']: 
+        print(line['message'])
